@@ -1,0 +1,51 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/PulseTag.Api/Dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - OpenRouter__ApiKey=${OPENROUTER_API_KEY}
+      - OpenRouter__Model=${OPENROUTER_MODEL:-microsoft/phi-3-medium-128k-instruct:free}
+      - LinkedIn__Cookies=${LINKEDIN_COOKIES}
+      - AllowedOrigins=${ALLOWED_ORIGINS:-http://localhost:3000}
+    volumes:
+      - ./src/PulseTag.Api/appsettings.Production.json:/app/appsettings.Production.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  web:
+    build:
+      context: .
+      dockerfile: src/PulseTag.Web/Dockerfile
+    ports:
+      - "3000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ApiBaseUrl=http://api:8080
+    volumes:
+      - web-keys:/app/keys
+    depends_on:
+      - api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  web-keys:
+
+networks:
+  default:
+    name: pulsetag-network

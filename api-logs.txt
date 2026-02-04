@@ -1,0 +1,28 @@
+Using launch settings from src\PulseTag.Api\Properties\launchSettings.json...
+Building...
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5100
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\bradm\CascadeProjects\pulse-tag\src\PulseTag.Api
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: PulseTag.Api.Services.SocialScraper[0]
+      Attempting to fetch tweet via oEmbed API: https://publish.twitter.com/oembed?url=https%3A%2F%2Fx.com%2Fvirattt%2Fstatus%2F1997770360209453322&omit_script=true
+info: PulseTag.Api.Services.SocialScraper[0]
+      Successfully extracted tweet text via oEmbed: 288 chars
+info: PulseTag.Api.Services.AIEngine[0]
+      Calling OpenRouter API with model: nvidia/nemotron-nano-9b-v2:free
+info: PulseTag.Api.Services.AIEngine[0]
+      OpenRouter API response received successfully
+info: PulseTag.Api.Services.AIEngine[0]
+      AI response content: {
+  "safe": ["Finance", "Tech", "OpenSource", "Stocks", "Investing", "AI", "DataScience"],
+  "rising": ["OpenSourceFinance", "AIforFinance", "StockMarketTech", "LangChain", "FintechInnovation"],
+  "niche": ["FinancialResearchTools", "StockAnalysisAI", "OpenSourceFintech", "TypeScriptFinance", "ReactStockTools"]
+}
+
+info: Microsoft.Hosting.Lifetime[0]

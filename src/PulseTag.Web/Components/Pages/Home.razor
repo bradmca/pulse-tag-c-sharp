@@ -1,0 +1,218 @@
+@page "/"
+@rendermode InteractiveServer
+@using PulseTag.Shared.Models
+@using PulseTag.Web.Components.Shared
+@using System.Text.Json
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<PageTitle>PulseTag - AI-Driven Hashtag Generator</PageTitle>
+
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem 0; margin: -2rem -1rem 2rem -1rem;">
+    <div class="container text-center">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <svg class="icon" style="width: 2rem; height: 2rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+            </svg>
+            <h1>PulseTag</h1>
+        </div>
+        <p>
+            AI-powered hashtag generator to maximize your social media reach
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <div style="display: flex; gap: 0.75rem;">
+            <input 
+                type="url" 
+                class="form-input"
+                style="flex: 1;"
+                placeholder="Paste Post URL (LinkedIn, X/Twitter)"
+                @bind="url"
+                @onkeypress="HandleKeyPress" />
+            <button 
+                class="btn btn-primary"
+                @onclick="AnalyzePost"
+                disabled="@(isLoading || string.IsNullOrEmpty(url))">
+                @if (isLoading)
+                {
+                    <div class="loading"></div>
+                    <span>Analyzing...</span>
+                }
+                else
+                {
+                    <span>Generate Tags</span>
+                }
+            </button>
+        </div>
+        <div style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);">
+            <p style="font-weight: 600; margin-bottom: 0.25rem;">💡 Tips:</p>
+            <ul style="list-style: disc; padding-left: 1.5rem; line-height: 1.5;">
+                <li>For X/Twitter: Click on the specific tweet to get its URL (must contain "/status/")</li>
+                <li>For LinkedIn: Use public posts or add cookies to appsettings for authenticated access</li>
+                <li>Try with blog posts or articles - they work great too!</li>
+            </ul>
+        </div>
+    </div>
+
+    @if (errorMessage != null)
+    {
+        <div class="card" style="background: #fef2f2; border-color: #fecaca;">
+            <p style="color: #991b1b;">@errorMessage</p>
+        </div>
+    }
+
+    @if (result != null)
+    {
+        <div class="hashtag-section">
+            <div class="card">
+                <h2 style="font-weight: 600; margin-bottom: 0.75rem;">Edit Your Post</h2>
+                <textarea 
+                    class="form-input"
+                    style="height: 8rem; resize: none;"
+                    @bind="editedText"
+                    placeholder="Your post text will appear here..."></textarea>
+                <button 
+                    class="btn btn-primary mt-2"
+                    style="background: var(--text-primary);"
+                    @onclick="CopyToClipboard">
+                    @if (copied)
+                    {
+                        <svg class="icon" style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>Copied!</span>
+                    }
+                    else
+                    {
+                        <svg class="icon" style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>Copy to Clipboard</span>
+                    }
+                </button>
+            </div>
+
+            <div>
+                <h2 style="font-weight: 600; margin-bottom: 1rem;">Suggested Hashtags</h2>
+                
+                <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                    <HashtagCategory 
+                        Title="Safe"
+                        Hashtags="result.Hashtags.Safe"
+                        ColorClass="text-blue-600"
+                        IconName="target"
+                        OnHashtagClick="AddHashtag" />
+                    
+                    <HashtagCategory 
+                        Title="Rising"
+                        Hashtags="result.Hashtags.Rising"
+                        ColorClass="text-green-600"
+                        IconName="trending"
+                        OnHashtagClick="AddHashtag" />
+                    
+                    <HashtagCategory 
+                        Title="Niche"
+                        Hashtags="result.Hashtags.Niche"
+                        ColorClass="text-purple-600"
+                        IconName="zap"
+                        OnHashtagClick="AddHashtag" />
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string url = string.Empty;
+    private bool isLoading = false;
+    private AnalyzeResponse? result;
+    private string editedText = string.Empty;
+    private HashSet<string> usedHashtags = new();
+    private bool copied = false;
+    private string? errorMessage;
+
+    private async Task AnalyzePost()
+    {
+        if (string.IsNullOrEmpty(url)) return;
+
+        isLoading = true;
+        errorMessage = null;
+        result = null;
+        StateHasChanged();
+        
+        try
+        {
+            var request = new AnalyzeRequest { Url = url };
+            var response = await Http.PostAsJsonAsync("/api/analyze", request);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    var errorDoc = JsonDocument.Parse(errorContent);
+                    var detail = errorDoc.RootElement.GetProperty("detail").GetString();
+                    errorMessage = detail ?? "Failed to analyze the post";
+                }
+                catch
+                {
+                    errorMessage = $"API Error: {response.StatusCode}";
+                }
+                return;
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            result = JsonSerializer.Deserialize<AnalyzeResponse>(responseContent, new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true 
+            });
+            editedText = result?.OriginalText ?? string.Empty;
+            usedHashtags.Clear();
+        }
+        catch (TaskCanceledException)
+        {
+            errorMessage = "Request timed out. The API may be slow or unavailable.";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Failed to connect to the API: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await AnalyzePost();
+        }
+    }
+
+    private void AddHashtag(string hashtag)
+    {
+        editedText = $"{editedText} #{hashtag}";
+        usedHashtags.Add(hashtag);
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", editedText);
+        copied = true;
+        StateHasChanged();
+        
+        await Task.Delay(2000);
+        copied = false;
+        StateHasChanged();
+    }
+}

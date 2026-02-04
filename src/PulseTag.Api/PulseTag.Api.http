@@ -1,0 +1,6 @@
+@PulseTag.Api_HostAddress = http://localhost:5272
+
+GET {{PulseTag.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

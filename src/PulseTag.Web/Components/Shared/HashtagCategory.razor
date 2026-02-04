@@ -1,0 +1,60 @@
+@using PulseTag.Shared.Models
+
+<div class="card hashtag-category category-@Title.ToLower()">
+    <div class="category-title">
+        @switch (IconName)
+        {
+            case "target":
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                break;
+            case "trending":
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                break;
+            case "zap":
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                break;
+        }
+        
+        <h3>@Title</h3>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: auto;">@Hashtags.Count</span>
+    </div>
+    
+    <div class="hashtag-list">
+        @foreach (var hashtag in Hashtags)
+        {
+            <button 
+                class="hashtag"
+                @onclick="() => OnHashtagClick.InvokeAsync(hashtag)">
+                #@hashtag
+            </button>
+        }
+    </div>
+    
+    @if (!Hashtags.Any())
+    {
+        <p style="color: var(--text-secondary); font-size: 0.875rem; font-style: italic;">No hashtags available</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public List<string> Hashtags { get; set; } = new();
+
+    [Parameter]
+    public string ColorClass { get; set; } = string.Empty;
+
+    [Parameter]
+    public string IconName { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> OnHashtagClick { get; set; }
+}
