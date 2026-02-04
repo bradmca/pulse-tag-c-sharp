@@ -1,5 +1,7 @@
 # PulseTag - AI-Driven Hashtag Generator (.NET)
 
+<img width="1232" height="896" alt="Screenshot 2026-02-04 112300" src="https://github.com/user-attachments/assets/219e819b-4728-4a14-a8b9-c4f9471ef7fc" />
+
 A powerful web application built with .NET 10 that analyzes your social media posts in real-time, suggesting the top trending hashtags to maximize post reach and engagement. Perfect for influencers and marketers who want to stay ahead of the trend curve.
 
 ## 🚀 Features
