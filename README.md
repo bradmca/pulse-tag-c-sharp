@@ -220,3 +220,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 If you have any questions or issues, please [open an issue](https://github.com/bradmca/pulse-tag-c-sharp/issues) on GitHub.
+
+**⭐ If this project helps you, please give it a star!**
